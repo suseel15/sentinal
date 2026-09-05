@@ -1,0 +1,19 @@
+# SENTINEL runtime dependencies (verified importable)
+pandas
+numpy
+scikit-learn
+xgboost
+shap
+networkx
+joblib
+fastapi
+uvicorn
+pydantic
+neo4j
+supabase
+
+# Optional / heavy (features degrade gracefully without them)
+# torch
+# torch-geometric
+# optuna
+# redis

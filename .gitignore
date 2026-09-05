@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+*.pkl
+*.joblib
+*.pt
+*.pth
+.ipynb_checkpoints/
+notebooks_executed/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js
+node_modules/
+frontend-app/node_modules/
+frontend/node_modules/
+frontend-app/.next/
+frontend/.next/
+out/
+.next/
+*.tsbuildinfo
+.next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Env / secrets (keep .env.example)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+sentinel.db
+
+# Logs
+*.log
+backend.log
+frontend-dev.log
+logs/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+nul
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Artifacts / outputs (uncomment to ignore generated outputs)
+# artifacts/
+# results/
+# reports/
+
+artifacts/
+*.csv
+*.db-journal

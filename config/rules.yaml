@@ -1,0 +1,41 @@
+# SENTINEL Phase 3 — rule thresholds, scores, severities. Tune here, never in code.
+large_amount_ratio: 5.0
+amount_zscore: 4.0
+new_beneficiary_ratio: 3.0
+high_velocity_day: 10
+high_velocity_7d: 25
+rapid_days: 1
+rapid_min_ratio: 2.0
+passthrough_ratio: 0.8
+structuring_band: [40000, 50000]
+structuring_window_days: 7
+structuring_count: 3
+fan_in_threshold: 5
+fan_out_threshold: 5
+gather_scatter_ratio: 4.0
+dormant_days: 30
+burst_z: 3.0
+high_risk_amount: 1000000
+mule_min_txns_day: 3
+rule_max_score: 100
+severity_weights: {LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 5}
+anomaly_severity: {LOW: 0.3, MEDIUM: 0.6, HIGH: 0.8}
+scores:
+  large_amount_flag: {score: 25, severity: HIGH}
+  high_velocity_flag: {score: 20, severity: HIGH}
+  high_velocity_7d_flag: {score: 15, severity: MEDIUM}
+  new_beneficiary_risk: {score: 30, severity: CRITICAL}
+  rapid_movement_flag: {score: 30, severity: HIGH}
+  structuring_flag: {score: 20, severity: MEDIUM}
+  structuring_window_flag: {score: 35, severity: CRITICAL}
+  high_value_flag: {score: 20, severity: MEDIUM}
+  fan_in_flag: {score: 25, severity: HIGH}
+  fan_out_flag: {score: 25, severity: HIGH}
+  gather_scatter_flag: {score: 20, severity: MEDIUM}
+  crypto_offramp_flag: {score: 25, severity: HIGH}
+  shell_invoice_flag: {score: 25, severity: HIGH}
+  trade_ml_flag: {score: 25, severity: HIGH}
+  weekend_burst_flag: {score: 10, severity: LOW}
+  dormant_reactivation_flag: {score: 15, severity: MEDIUM}
+  mule_passthrough_flag: {score: 35, severity: CRITICAL}
+  burst_flag: {score: 15, severity: MEDIUM}

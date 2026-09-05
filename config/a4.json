@@ -1,0 +1,36 @@
+{
+  "MAX_HOPS": 4,
+  "MAX_NODES": 2000,
+  "TIME_WINDOW_HOURS": 72,
+  "SUPERNODE_P95": 95,
+  "SUPERNODE_P99": 99,
+  "SUPERNODE_ABS_DEGREE": 500,
+  "HUB_WHITELIST": [],
+  "RISK_WEIGHTS": {
+    "mule_chain": 0.25,
+    "fan_in": 0.15,
+    "fan_out": 0.15,
+    "circular_flow": 0.20,
+    "rapid_layering": 0.15,
+    "shared_identity": 0.10
+  },
+  "IDENTITY_WEIGHTS": {
+    "device": 0.30,
+    "phone": 0.40,
+    "ip": 0.15,
+    "address": 0.20
+  },
+  "MULE_WEIGHTS": {
+    "rapid": 0.25,
+    "passthrough": 0.20,
+    "new_account": 0.15,
+    "counterparty": 0.15,
+    "identity": 0.15,
+    "history": 0.10
+  },
+  "RISK_BANDS": {
+    "LOW": 30,
+    "MED": 60,
+    "HIGH": 80
+  }
+}

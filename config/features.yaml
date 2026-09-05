@@ -1,0 +1,25 @@
+# SENTINEL Phase 2 — feature configuration. Tune here, never hardcode in functions.
+velocity_windows_days: [1, 7]
+amount_windows_days: [7, 30]
+minimum_history: 5
+night_hours: [0, 1, 2, 3, 4, 5]
+structuring_band: [40000, 50000]
+structuring_window_days: 7
+structuring_count: 3
+passthrough_window_days: 1
+pattern_recent_days: 1
+pattern_history_days: 30
+enable:
+  transaction: true
+  amount: true
+  velocity: true
+  beneficiary: true
+  account_behavior: true
+  receiver: true
+  rapid_movement: true
+  structuring: true
+  temporal: true
+  geography: true
+  currency: true
+  pattern_change: true
+  network_prep: true

@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>SENTINEL — Live Investigation Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+:root{
+  --bg:#0b1020;--panel:#121833;--panel2:#0e1430;--ink:#e6ecff;--muted:#93a0c8;
+  --accent:#5aa8ff;--warn:#f0b400;--bad:#ff5c7c;--ok:#29c48a;--hi:#a78bfa;
+  --border:#1f2750;--chip:#1c2350;
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:18px 22px;background:linear-gradient(90deg,#10183a,#0b1020);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:18px}
+header h1{margin:0;font-size:18px;letter-spacing:.5px}
+header .badge{background:var(--chip);color:var(--muted);padding:4px 10px;border-radius:999px;font-size:12px}
+header .grow{flex:1}
+.btn{background:var(--accent);color:#06122a;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn.secondary{background:var(--panel);color:var(--ink);border:1px solid var(--border)}
+.btn.warn{background:var(--warn);color:#1d1500}
+.btn.bad{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+main{display:grid;grid-template-columns:1fr 380px;gap:14px;padding:14px}
+section{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+section h2{margin:0 0 10px 0;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kpi{display:flex;gap:14px;flex-wrap:wrap}
+.kpi .card{background:var(--panel2);padding:10px 14px;border-radius:8px;border:1px solid var(--border);min-width:140px}
+.kpi .v{font-size:20px;font-weight:700}
+.kpi .l{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+tr.clickable{cursor:pointer}
+tr.clickable:hover{background:#15204a}
+.status{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;text-transform:uppercase}
+.s-IN_PROGRESS,.s-WAITING_FOR_HUMAN,.s-A3_PROCESSING,.s-A4_PROCESSING,.s-A5_PROCESSING,.s-A8_PROCESSING,.s-REPORT_GENERATING{background:#1f2c5c;color:#9ec0ff}
+.s-A1_COMPLETED,.s-A2_COMPLETED,.s-A3_COMPLETED,.s-A4_COMPLETED,.s-A5_COMPLETED,.s-RECOMMENDATION_READY{background:#1d3a4a;color:#7fd9ff}
+.s-AUTO_CLOSED,.s-COMPLETED,.s-LOG_ONLY,.s-DUPLICATE_LOGGED{background:#1d3a30;color:#7ff0b3}
+.s-ESCALATED,.s-FAILED,.s-REQUESTED_MORE_EVIDENCE{background:#4a1d2a;color:#ffb1c0}
+.s-OPEN{background:#3a2f1d;color:#ffd47f}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.d-LOW{background:var(--ok)} .d-MED,.d-MEDIUM{background:var(--warn)} .d-HIGH,.d-CRITICAL{background:var(--bad)}
+.right .panel{background:var(--panel2);padding:12px;border-radius:8px;border:1px solid var(--border);margin-bottom:12px}
+.right pre{white-space:pre-wrap;word-break:break-word;background:#070b1c;padding:8px;border-radius:6px;font-size:12px;max-height:260px;overflow:auto}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{background:var(--panel2);border:1px solid var(--border);color:var(--ink);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}
+.tabs button.active{background:var(--accent);color:#06122a;border-color:var(--accent)}
+.empty{color:var(--muted);font-style:italic;padding:8px}
+.scroller{max-height:380px;overflow:auto}
+.section-title{display:flex;align-items:center;justify-content:space-between}
+.score{font-weight:700}
+.score.LOW{color:var(--ok)} .score.MED,.score.MEDIUM{color:var(--warn)} .score.HIGH,.score.CRITICAL{color:var(--bad)}
+.tag{display:inline-block;background:var(--chip);padding:2px 8px;border-radius:6px;margin:2px;font-size:11px}
+.actions{display:flex;gap:6px;margin-top:8px}
+label{color:var(--muted);font-size:11px;display:block;margin:6px 0 4px}
+input,select,textarea{background:#070b1c;color:var(--ink);border:1px solid var(--border);padding:6px 8px;border-radius:6px;width:100%;font:inherit}
+textarea{min-height:60px;resize:vertical}
+.col{display:flex;gap:8px;align-items:center}
+.col > *{flex:1}
+hr{border:0;border-top:1px solid var(--border);margin:14px 0}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px;max-width:360px}
+.stream-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:#555}
+.stream-dot.running{background:var(--ok);box-shadow:0 0 0 0 rgba(41,196,138,.7);animation:pulse 1.5s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(41,196,138,.7)}70%{box-shadow:0 0 0 10px rgba(41,196,138,0)}100%{box-shadow:0 0 0 0 rgba(41,196,138,0)}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>SENTINEL</h1>
+    <div class="badge">Phase 7 — End-to-End Investigation Platform</div>
+  </div>
+  <div class="grow"></div>
+  <div class="col" style="flex:0 0 auto">
+    <span id="stream-indicator" class="stream-dot"></span>
+    <span id="stream-status" style="font-size:12px;color:var(--muted)">idle</span>
+  </div>
+  <button class="btn" id="btn-start-stream">Start Stream</button>
+  <button class="btn secondary" id="btn-stop-stream">Stop</button>
+  <select id="sel-scenario" class="btn secondary" style="max-width:220px"></select>
+  <button class="btn" id="btn-simulate">Simulate</button>
+  <button class="btn secondary" id="btn-refresh">Refresh</button>
+</header>
+
+<main>
+  <section>
+    <div class="kpi">
+      <div class="card"><div class="l">Investigations</div><div class="v" id="kpi-total">0</div></div>
+      <div class="card"><div class="l">Awaiting Human</div><div class="v" id="kpi-waiting">0</div></div>
+      <div class="card"><div class="l">Auto-Closed</div><div class="v" id="kpi-auto">0</div></div>
+      <div class="card"><div class="l">Escalated</div><div class="v" id="kpi-esc">0</div></div>
+      <div class="card"><div class="l">Streamed</div><div class="v" id="kpi-stream">0</div></div>
+    </div>
+
+    <hr/>
+
+    <div class="section-title">
+      <h2>Live Investigation Stream</h2>
+      <div style="font-size:11px;color:var(--muted)">click an investigation to load details</div>
+    </div>
+    <div class="scroller">
+      <table id="stream-table">
+        <thead><tr>
+          <th>Investigation</th><th>Txn</th><th>Status</th><th>Risk</th><th>Rec.</th><th>Time</th>
+        </tr></thead>
+        <tbody id="stream-body"></tbody>
+      </table>
+    </div>
+
+    <hr/>
+
+    <div class="section-title">
+      <h2>Persisted Reports — High-Risk Cases</h2>
+      <div style="font-size:11px;color:var(--muted)">saved permanently on every high-risk investigation; click to open</div>
+    </div>
+    <div class="scroller">
+      <table id="reports-table">
+        <thead><tr>
+          <th>Investigation</th><th>Status</th><th>Risk</th><th>Recommendation</th><th>Report</th><th>Updated</th>
+        </tr></thead>
+        <tbody id="reports-body"><tr><td colspan="6" class="empty">No persisted high-risk cases yet.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <aside class="right">
+    <div class="panel">
+      <h2>Manual Investigation Start</h2>
+      <label>Transaction ID (from labeled_transactions.csv)</label>
+      <input id="in-txn-id" placeholder="TXN14ec84989926909a" />
+      <div class="actions">
+        <button class="btn" id="btn-start-txn">Start by ID</button>
+      </div>
+      <hr/>
+      <label>Or send a custom payload</label>
+      <textarea id="in-payload" placeholder='{"transaction_id":"API-001","account_id":"ACC1","counterparty_name":"CP1","amount":250000,"date":"2026-03-01T02:30:00","type":"DEBIT","category":"WIRE"}'></textarea>
+      <div class="actions">
+        <button class="btn secondary" id="btn-start-payload">Start by Payload</button>
+      </div>
+      <div id="start-out" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Investigation Detail</h2>
+      <div id="detail-empty" class="empty">No investigation selected.</div>
+      <div id="detail" style="display:none">
+        <div class="tabs">
+          <button data-tab="summary" class="active">Summary</button>
+          <button data-tab="evidence">Evidence (A3)</button>
+          <button data-tab="graph">Graph (A4)</button>
+          <button data-tab="report">Report</button>
+          <button data-tab="rec">Recommendation</button>
+          <button data-tab="reg">Regulatory</button>
+          <button data-tab="audit">Audit</button>
+          <button data-tab="decision">Decision</button>
+        </div>
+        <div id="tab-summary"></div>
+        <div id="tab-evidence" style="display:none"></div>
+        <div id="tab-graph" style="display:none"></div>
+        <div id="tab-report" style="display:none"></div>
+        <div id="tab-rec" style="display:none"></div>
+        <div id="tab-reg" style="display:none"></div>
+        <div id="tab-audit" style="display:none"></div>
+        <div id="tab-decision" style="display:none">
+          <label>Decision</label>
+          <select id="hd-decision">
+            <option value="ACCEPT">ACCEPT</option>
+            <option value="OVERRIDE">OVERRIDE</option>
+            <option value="REQUEST_MORE_EVIDENCE">REQUEST_MORE_EVIDENCE</option>
+            <option value="ESCALATE">ESCALATE</option>
+          </select>
+          <label>Investigator ID</label>
+          <input id="hd-investigator" placeholder="INV-001" value="INV-001"/>
+          <label>Justification</label>
+          <textarea id="hd-just" placeholder="reasoning"></textarea>
+          <label>Confirmed outcome (optional)</label>
+          <input id="hd-outcome" placeholder="FRAUD / CLEAR / INCONCLUSIVE"/>
+          <div class="actions">
+            <button class="btn" id="btn-submit-decision">Submit Decision</button>
+          </div>
+          <div id="hd-out" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+const API = ""; // same origin
+const $ = (id) => document.getElementById(id);
+let selectedInv = null;
+let streamTimer = null;
+let streamStateTimer = null;
+let recentList = [];
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, { headers: {"Content-Type":"application/json"}, ...opts });
+  if (!res.ok) throw new Error((await res.text()) || res.statusText);
+  return res.json();
+}
+
+function toast(msg, ms = 3500) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = "none", ms);
+}
+
+function fmtPct(v) { return v == null ? "—" : Number(v).toFixed(1); }
+
+function statusBadge(s) {
+  return `<span class="status s-${s||''}">${s||'—'}</span>`;
+}
+
+function riskDot(level) {
+  const cls = (level||"").toUpperCase().startsWith("CRIT") ? "CRITICAL" : (level||"").toUpperCase();
+  return `<span class="dot d-${cls}"></span><span class="score ${cls}">${level||'—'}</span>`;
+}
+
+function rowHtml(ev) {
+  return `<tr class="clickable" data-inv="${ev.investigation_id||''}">
+    <td>${ev.investigation_id||"—"}</td>
+    <td style="font-family:monospace;font-size:12px;color:var(--muted)">${ev.transaction_id||""}</td>
+    <td>${statusBadge(ev.status)}</td>
+    <td>${fmtPct(ev.risk_score)}</td>
+    <td>${ev.recommendation||"—"}</td>
+    <td style="font-size:11px;color:var(--muted)">${(ev.ts||"").slice(11,19)}</td>
+  </tr>`;
+}
+
+let _pollN = 0;
+async function refreshStreamStatus() {
+  try {
+    const s = await api("/stream/status");
+    _pollN++;
+    if (_pollN % 10 === 0) refreshReports().catch(() => {});    $("stream-status").textContent = s.running ? `running (${s.processed} processed)` : "idle";
+    $("stream-indicator").className = "stream-dot " + (s.running ? "running" : "");
+    $("kpi-stream").textContent = s.processed;
+    recentList = s.recent || [];
+    renderStreamRows();
+    updateKpis();
+  } catch (e) { /* ignore */ }
+}
+
+function renderStreamRows() {
+  const body = $("stream-body");
+  if (!recentList.length) {
+    body.innerHTML = `<tr><td colspan="6" class="empty">No investigations yet. Start the stream or click "Start by Payload".</td></tr>`;
+    return;
+  }
+  body.innerHTML = recentList.map(rowHtml).join("");
+  body.querySelectorAll("tr.clickable").forEach(tr => {
+    tr.addEventListener("click", () => selectInvestigation(tr.dataset.inv));
+  });
+}
+
+function updateKpis() {
+  const total = recentList.length;
+  const waiting = recentList.filter(r => r.status === "WAITING_FOR_HUMAN").length;
+  const auto = recentList.filter(r => r.status === "AUTO_CLOSED" || r.status === "DUPLICATE_LOGGED").length;
+  const esc = recentList.filter(r => r.status === "ESCALATED").length;
+  $("kpi-total").textContent = total;
+  $("kpi-waiting").textContent = waiting;
+  $("kpi-auto").textContent = auto;
+  $("kpi-esc").textContent = esc;
+}
+
+async function selectInvestigation(inv_id) {
+  if (!inv_id) return;
+  selectedInv = inv_id;
+  $("detail-empty").style.display = "none";
+  $("detail").style.display = "block";
+  await loadTab("summary");
+}
+
+async function loadTab(tab) {
+  if (!selectedInv) return;
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  ["summary","evidence","graph","report","rec","reg","audit","decision"].forEach(t => $("tab-"+t).style.display = t===tab ? "block" : "none");
+  try {
+    if (tab === "summary") {
+      const st = await api(`/investigations/${selectedInv}/state`);
+      const a2 = (st.sections||{}).A2?.detection || {};
+      const a4 = (st.sections||{}).A4?.graph || {};
+      const a8 = (st.sections||{}).A8?.recommendation || {};
+      $("tab-summary").innerHTML = `
+        <div><b>Investigation:</b> ${st.inv_id}</div>
+        <div><b>Status:</b> ${statusBadge(st.status)}</div>
+        <div><b>Risk:</b> ${riskDot(st.risk_level)} (${fmtPct(st.risk_score)})</div>
+        <div><b>Recommendation:</b> ${a8.recommendation||"—"}</div>
+        <div><b>Graph Mode:</b> ${a4.analysis_mode||"—"} ${a4.manual_review_required ? '<span class="tag">manual review</span>':''}</div>
+        <div><b>Patterns:</b> ${Object.entries(a4.patterns||{}).filter(([,v])=>v && v.pattern_detected).map(([k])=>`<span class="tag">${k}</span>`).join(" ")||"<span class='empty'>none</span>"}</div>
+        <div><b>Human Decision:</b> ${st.human_decision ? st.human_decision.decision : "<span class='empty'>pending</span>"}</div>
+        <div><b>Updated:</b> ${st.updated}</div>
+        <div style="margin-top:8px"><button class="btn secondary" id="btn-rerun">Re-run models for this case</button>
+        <span id="rerun-out" style="font-size:12px;color:var(--muted);margin-left:8px"></span></div>
+      `;
+      const rb = $("btn-rerun");
+      if (rb) rb.onclick = rerunModels;
+    } else if (tab === "evidence") {
+      const r = await api(`/evidence/${selectedInv}`);
+      const items = r.evidence || r.items || [];
+      const s = r.evidence_summary || {};
+      $("tab-evidence").innerHTML = `
+        <div><b>A3 Evidence Pack</b> — ${r.status||""} · total ${s.total??items.length} ·
+        supporting ${s.supporting??"—"} · contradicting ${s.contradicting??"—"} ·
+        avg confidence ${s.avg_confidence??s.average_confidence??"—"}</div><hr/>` +
+        (items.slice(0,30).map(e => `<div><b>${e.type||e.evidence_type||""}</b>
+        [${e.direction||""}] (conf ${e.confidence??"—"})<br>
+        <span style="color:var(--muted)">${e.title||""} — ${e.description||e.summary||""}</span><br>
+        <span style="font-size:11px;color:var(--muted)">src: ${e.source||""} · ${e.status||""}</span></div><hr/>`).join("") ||
+        "<div class='empty'>No evidence items.</div>");
+    } else if (tab === "graph") {
+      const r = await api(`/investigations/${selectedInv}/graph`);
+      const pats = Object.entries(r.patterns||{}).map(([k,v]) =>
+        `<div>${k}: detected=<b>${v.pattern_detected}</b> score=${v.score} conf=${v.confidence}<br>
+        <span style="font-size:11px;color:var(--muted)">${v.reason||""}</span></div>`).join("");
+      $("tab-graph").innerHTML = `
+        <div><b>A4 Graph Analysis</b> — mode ${r.analysis_mode||""} · status ${r.status||""} ·
+        graph risk ${r.graph_risk_score??"—"} (${r.risk_level||""}) ·
+        nodes ${r.node_count??"—"} edges ${r.edge_count??"—"}</div><hr/>${pats||"<div class='empty'>No patterns.</div>"}
+        <div style="margin-top:6px;font-size:11px;color:var(--muted)">limitations: ${(r.limitations||[]).join("; ")||"—"}</div>
+        <div style="margin-top:8px"><button class="btn secondary" id="btn-graph-viz">Load visualization data</button>
+        <span id="graph-viz-out" style="font-size:11px;color:var(--muted);margin-left:8px"></span></div>`;
+      const gv = $("btn-graph-viz");
+      if (gv) gv.onclick = async () => {
+        try {
+          const v = await api(`/investigations/${selectedInv}/graph/visualization`);
+          $("graph-viz-out").textContent = `nodes ${(v.nodes||[]).length}, edges ${(v.edges||[]).length} (render in Network view)`;
+        } catch (e) { $("graph-viz-out").textContent = String(e.message || e); }
+      };
+    } else if (tab === "report") {
+      const r = await api(`/investigations/${selectedInv}/report`);
+      if (r.available === false) {
+        $("tab-report").innerHTML = `<div class="empty">${r.reason||"No report available for this case."}</div>`;
+        return;
+      }
+      const sec = r.sections || {};
+      $("tab-report").innerHTML = `
+        <div class="actions" style="margin-bottom:8px"><button class="btn secondary" id="btn-print-report">Print agent report</button></div>
+        <div><b>EXECUTIVE SUMMARY</b><pre>${sec.EXECUTIVE_SUMMARY||""}</pre></div>
+        <div><b>DETECTION FINDINGS</b><pre>${JSON.stringify(sec.DETECTION_FINDINGS||{},null,2)}</pre></div>
+        <div><b>WHY FLAGGED</b><pre>${JSON.stringify(sec.WHY_FLAGGED||{},null,2)}</pre></div>
+        <div><b>MONEY FLOW</b><pre>${JSON.stringify(sec.MONEY_FLOW||{},null,2)}</pre></div>
+        <div><b>EVIDENCE</b><pre>${JSON.stringify(sec.EVIDENCE||{},null,2).slice(0,4000)}</pre></div>
+        <div><b>GRAPH ANALYSIS</b><pre>${JSON.stringify(sec.GRAPH_ANALYSIS||{},null,2)}</pre></div>
+        <div><b>REGULATORY ASSESSMENT</b><pre>${JSON.stringify(sec.REGULATORY_ASSESSMENT||{},null,2).slice(0,4000)}</pre></div>
+        <div><b>LIMITATIONS</b><pre>${(sec.ANALYSIS_LIMITATIONS||[]).join("\n")}</pre></div>
+        <div><b>RECOMMENDED NEXT STEP</b><pre>${sec.RECOMMENDED_NEXT_STEP||""}</pre></div>
+        <div><b>narrative_source:</b> ${r.narrative_source} | <b>grounded_in:</b> ${(r.narrative_grounded_in||[]).join(", ")}</div>
+      `;
+      const pb = $("btn-print-report");
+      if (pb) pb.onclick = printAgentReport;
+    } else if (tab === "rec") {
+      const r = await api(`/investigations/${selectedInv}/recommendation`);
+      if (r.available === false) { $("tab-rec").innerHTML = `<div class="empty">${r.reason||""}</div>`; return; }
+      $("tab-rec").innerHTML = `<pre>${JSON.stringify(r,null,2)}</pre>`;
+    } else if (tab === "reg") {
+      const r = await api(`/investigations/${selectedInv}/regulatory`);
+      if (r.available === false) { $("tab-reg").innerHTML = `<div class="empty">${r.reason||""}</div>`; return; }
+      const cites = (r.citations||[]).map(c => `<div><b>${c.id}</b> — ${c.title}<br><span style="color:var(--muted)">${c.excerpt||""}</span></div>`).join("<hr/>");
+      $("tab-reg").innerHTML = `
+        <div><b>Jurisdiction:</b> ${r.jurisdiction}</div>
+        <div><b>Status:</b> ${r.status}</div>
+        <div><b>Matched Tags:</b> ${(r.matched_tags||[]).map(t=>`<span class="tag">${t}</span>`).join(" ")}</div>
+        <div><b>Disclaimer:</b> ${r.disclaimer||""}</div>
+        <hr/><b>Citations</b>${cites||"<div class='empty'>none</div>"}
+      `;
+    } else if (tab === "audit") {
+      const r = await api(`/investigations/${selectedInv}/audit`);
+      $("tab-audit").innerHTML = `<pre>${(r.events||[]).map(e => `[${e.at}] ${e.actor}: ${e.event}`).join("\n")}</pre>`;
+    }
+  } catch (e) {
+    toast("load failed: " + e.message);
+  }
+}
+
+async function startStream() {
+  try { await api("/stream/start", { method:"POST", body: JSON.stringify({rps:0.5, limit:20}) }); toast("stream started"); refreshStreamStatus(); }
+  catch (e) { toast("start failed: " + e.message); }
+}
+
+async function stopStream() {
+  try { await api("/stream/stop", { method:"POST", body: "{}" }); toast("stream stopped"); }
+  catch (e) { toast("stop failed: " + e.message); }
+  refreshStreamStatus();
+}
+
+async function startByTxn() {
+  const tid = $("in-txn-id").value.trim();
+  if (!tid) return toast("enter a transaction_id");
+  try {
+    const out = await api("/investigations/start", { method:"POST", body: JSON.stringify({transaction_id:tid, sync:true}) });
+    $("start-out").textContent = JSON.stringify(out);
+    if (out.investigation_id) { await refreshStreamStatus(); selectInvestigation(out.investigation_id); }
+  } catch (e) { $("start-out").textContent = String(e.message || e); }
+}
+
+async function startByPayload() {
+  let payload;
+  try { payload = JSON.parse($("in-payload").value || "{}"); }
+  catch (e) { return toast("invalid JSON"); }
+  try {
+    const out = await api("/investigations/start", { method:"POST", body: JSON.stringify({payload, sync:true}) });
+    $("start-out").textContent = JSON.stringify(out);
+    if (out.investigation_id) { await refreshStreamStatus(); selectInvestigation(out.investigation_id); }
+  } catch (e) { $("start-out").textContent = String(e.message || e); }
+}
+
+async function rerunModels() {
+  if (!selectedInv) return;
+  const out = $("rerun-out");
+  if (out) out.textContent = "re-running A2 models…";
+  try {
+    const r = await api(`/investigations/${selectedInv}/refresh`, { method:"POST", body:"{}" });
+    if (out) out.textContent = `updated: risk ${r.risk_score} (${r.risk_level})`;
+    toast("models re-run; values updated");
+    await loadTab("summary");
+    await refreshReports();
+  } catch (e) { if (out) out.textContent = String(e.message || e); }
+}
+
+async function loadScenarios() {
+  try {
+    const r = await api("/simulate/scenarios");
+    const sel = $("sel-scenario");
+    sel.innerHTML = (r.scenarios||[]).map(s => `<option value="${s.scenario_id}">${s.scenario_id}</option>`).join("");
+  } catch (e) { /* backend may predate endpoint */ }
+}
+
+async function simulate() {
+  const sel = $("sel-scenario");
+  const sid = sel && sel.value ? sel.value : "suspicious_structuring";
+  toast("injecting scenario: " + sid);
+  try {
+    const r = await api("/simulate", { method:"POST", body: JSON.stringify({scenario_id: sid}) });
+    const invs = r.investigations || [];
+    toast(`simulated ${sid}: ${invs.length} investigation(s)`);
+    await refreshStreamStatus();
+    await refreshReports();
+    const first = invs.find(i => i.investigation_id);
+    if (first) selectInvestigation(first.investigation_id);
+  } catch (e) { toast("simulate failed: " + e.message); }
+}
+
+async function refreshReports() {
+  try {
+    const r = await api("/reports");
+    const rows = r.reports || [];
+    const body = $("reports-body");
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="6" class="empty">No persisted high-risk cases yet.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map(c => `<tr class="clickable" data-inv="${c.investigation_id}">
+      <td style="font-family:monospace">${c.investigation_id}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${fmtPct(c.risk_score)} (${c.risk_level||"—"})</td>
+      <td>${c.recommendation||"—"}</td>
+      <td>${c.report_ready ? '<span class="tag">ready</span>' : "<span class='empty'>pending</span>"}</td>
+      <td style="font-size:11px;color:var(--muted)">${(c.updated||"").slice(0,19).replace("T"," ")}</td>
+    </tr>`).join("");
+    body.querySelectorAll("tr.clickable").forEach(tr => {
+      tr.addEventListener("click", () => selectInvestigation(tr.dataset.inv));
+    });
+  } catch (e) { /* ignore */ }
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+async function printAgentReport() {
+  if (!selectedInv) return;
+  try {
+    const [rep, st, rec] = await Promise.all([
+      api(`/investigations/${selectedInv}/report`),
+      api(`/investigations/${selectedInv}/state`),
+      api(`/investigations/${selectedInv}/recommendation`).catch(() => ({})),
+    ]);
+    if (rep.available === false) return toast(rep.reason || "No report available.");
+    const sec = rep.sections || {};
+    const rows = Object.entries(sec).map(([k, v]) =>
+      `<h2>${esc(k.replace(/_/g, " "))}</h2><pre>${esc(typeof v === "string" ? v : JSON.stringify(v, null, 2))}</pre>`).join("");
+    const w = window.open("", "_blank");
+    if (!w) return toast("Popup blocked — allow popups to print the report.");
+    w.document.write(`<html><head><title>SENTINEL Report ${esc(selectedInv)}</title>
+      <style>body{font-family:Arial,sans-serif;margin:32px;color:#111}h1{font-size:20px}h2{font-size:14px;margin-top:18px;border-bottom:1px solid #999;padding-bottom:4px}pre{white-space:pre-wrap;font-size:12px;background:#f4f4f4;padding:8px}.meta{font-size:12px;color:#444}</style>
+      </head><body>
+      <h1>SENTINEL Investigation Report — ${esc(selectedInv)}</h1>
+      <p class="meta">Status ${(st||{}).status || ""} · Risk ${(st||{}).risk_score ?? ""} (${(st||{}).risk_level || ""}) ·
+      Recommendation ${(rec||{}).recommendation || ""} · Generated ${(rep||{}).generated_at || ""} ·
+      Source ${(rep||{}).narrative_source || ""}</p>
+      <p class="meta">Facts only from structured agent outputs. ${(rep||{}).disclaimer || ""}</p>
+      ${rows}
+      </body></html>`);
+    w.document.close();
+    w.focus();
+    w.print();
+  } catch (e) { toast("print failed: " + e.message); }
+}
+
+async function submitDecision() {  if (!selectedInv) return;
+  const body = {
+    investigator_id: $("hd-investigator").value || "INV-001",
+    decision: $("hd-decision").value,
+    justification: $("hd-just").value,
+    confirmed_outcome: $("hd-outcome").value || null,
+  };
+  try {
+    const r = await api(`/investigations/${selectedInv}/human-decision`, { method:"POST", body: JSON.stringify(body) });
+    $("hd-out").textContent = JSON.stringify(r);
+    toast("decision recorded");
+    await refreshStreamStatus();
+    await loadTab("summary");
+  } catch (e) { $("hd-out").textContent = String(e.message || e); }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  $("btn-start-stream").onclick = startStream;
+  $("btn-stop-stream").onclick = stopStream;
+  $("btn-refresh").onclick = refreshStreamStatus;
+  $("btn-start-txn").onclick = startByTxn;
+  $("btn-start-payload").onclick = startByPayload;
+  $("btn-simulate").onclick = simulate;
+  $("btn-submit-decision").onclick = submitDecision;
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => loadTab(b.dataset.tab));
+  streamTimer = setInterval(refreshStreamStatus, 1500);
+  refreshStreamStatus();
+  refreshReports();
+  loadScenarios();
+});
+</script>
+</body>
+</html>

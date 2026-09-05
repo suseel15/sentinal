@@ -1,0 +1,16 @@
+{
+  "prefilter_weights": {
+    "amount_risk": 0.25,
+    "velocity_risk": 0.25,
+    "beneficiary_risk": 0.20,
+    "time_risk": 0.10,
+    "country_risk": 0.10,
+    "tms_alert": 0.10
+  },
+  "triage_bands": {"LOG_ONLY": 0.30, "MONITOR": 0.60},
+  "amount_reference": {"large": 500000, "very_large": 2000000},
+  "velocity_reference": {"day_count": 10, "week_count": 25},
+  "high_risk_countries": [],
+  "night_hours": [0, 1, 2, 3, 4, 5],
+  "db_path": "database/sentinel.db"
+}
